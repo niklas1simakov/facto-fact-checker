@@ -1,10 +1,12 @@
 import os
+from typing import Literal
 from urllib.parse import urlparse
 
 import fastapi
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from openai import OpenAI
+from openai.types.responses import ParsedResponse
 from pydantic import BaseModel, HttpUrl
 
 load_dotenv()
@@ -19,6 +21,18 @@ class BodyData(BaseModel):
 
 class StatementList(BaseModel):
     statements: list[str]
+
+
+class StatementCheck(BaseModel):
+    probability: Literal["high", "low", "uncertain"]
+    reason: str
+
+
+class Statement:
+    statement: str
+    probability: Literal["high", "low", "uncertain"]
+    reason: str
+    sources: list[str]
 
 
 @app.post("/fake-check")
@@ -132,5 +146,54 @@ def _check_statements(statements: list[str]) -> list[tuple[bool, str]]:
 
 
 def _check_statement(statement: str) -> tuple[bool, str]:
-    # Implement using OpenAI API (the api returns a boolean and a reason)
-    return (False, "This is a fake statement")
+    prompt = """
+    Check if the following statement is rather true or not, use the web search tool to check if the statement is true. 
+    Reason why it is true or fake. Return a high probability if the statement is true, a low probability if the statement is fake and an uncertain probability if it is unclear.
+    Return the result in the following format:
+    {
+        "probability": high | low | uncertain,
+        "reason": "The statement is fake because..."
+    }
+    """
+
+    response = client.responses.parse(
+        model="gpt-4o",
+        input=[
+            {
+                "role": "system",
+                "content": prompt,
+            },
+            {
+                "role": "user",
+                "content": statement,
+            },
+        ],
+        text_format=StatementCheck,
+        tools=[{"type": "web_search_preview"}],
+        stream=False,
+        max_output_tokens=600,
+    )
+
+    sources = _get_sources(response)
+    statement_response = response.output_parsed
+
+    # change the statement type to Statement
+    statement_checked = Statement()
+    statement_checked.statement = statement
+    statement_checked.probability = statement_response.probability
+    statement_checked.reason = statement_response.reason
+    statement_checked.sources = sources
+
+    return statement_checked
+
+
+def _get_sources(response: ParsedResponse) -> list[str]:
+    sources = []
+    for output in response.output:
+        if output.type == "message":
+            for item in output.content:
+                if item.type == "output_text":
+                    for annotation in item.annotations:
+                        if annotation.type == "url_citation":
+                            sources.append(annotation.url)
+    return sources
