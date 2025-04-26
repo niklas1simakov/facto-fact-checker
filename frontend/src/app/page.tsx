@@ -76,7 +76,7 @@ function isUrl(str: string) {
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
-  const [currentStep, setCurrentStep] = useState(1); // For demo, always 0
+  const [currentStep, setCurrentStep] = useState(0); // For demo, always 0
   const steps = isUrl(inputValue) ? stepsUrl : stepsText;
 
   return (
