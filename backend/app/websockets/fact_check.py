@@ -202,16 +202,20 @@ async def process_request(
             )
 
         # Limit number of statements
+        original_count = len(statements)
         statements = statements[:MAX_STATEMENTS]
+        was_limited = original_count > MAX_STATEMENTS
 
         await send_progress(
             client_id,
             {
                 "type": "progress",
                 "stage": "extraction_complete",
-                "message": f"Found {len(statements)} statements to verify",
+                "message": f"Found {original_count} statements to verify{f', limiting to {MAX_STATEMENTS}' if was_limited else ''}",
                 "progress": 50,
                 "statements": statements,
+                "was_limited": was_limited,
+                "original_count": original_count,
             },
         )
 
