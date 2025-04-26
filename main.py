@@ -7,38 +7,36 @@ from pydantic import BaseModel, HttpUrl
 app = fastapi.FastAPI()
 
 
-class Url(BaseModel):
-    url: HttpUrl
+class BodyData(BaseModel):
+    data: HttpUrl | str
 
 
-@app.post("/fake-check-url")
-def fake_check_url(url: Url):
-    if _check_instagram_url(url.url):
-        return _check_instagram(url.url)
-    elif _check_tiktok_url(url.url):
-        return _check_tiktok(url.url)
+@app.post("/fake-check")
+async def fake_check(data: BodyData):
+    data = data.data
+    # Check if it appears to be a URL or just text content
+    parsed_url = urlparse(str(data))
+    if parsed_url.netloc:
+        print(f"Checking url: {data}")
+        return _fake_check_url(data)
     else:
-        raise HTTPException(status_code=400, detail="Invalid URL")
+        print(f"Checking text: {data}")
+        return _fake_check_text(str(data))
 
 
-@app.post("/fake-check-instagram")
-def fake_check_instagram(url: Url):
-    if not _check_instagram_url(url.url):
-        raise HTTPException(status_code=400, detail="Invalid Instagram URL")
-
-    return _check_instagram(url.url)
-
-
-@app.post("/fake-check-tiktok")
-def fake_check_tiktok(url: Url):
-    if not _check_tiktok_url(url.url):
-        raise HTTPException(status_code=400, detail="Invalid TikTok URL")
-
-    return _check_tiktok(url.url)
+def _fake_check_url(url: HttpUrl):
+    if _check_instagram_url(url):
+        return _check_instagram(url)
+    elif _check_tiktok_url(url):
+        return _check_tiktok(url)
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid URL (only Instagram and TikTok are supported)",
+        )
 
 
-@app.post("/fake-check-text")
-def fake_check_text(text: str):
+def _fake_check_text(text: str):
     statements = _extract_statements_from_text(text)
     return _check_statements(statements)
 
