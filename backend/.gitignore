@@ -8,3 +8,14 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+logs/*
+*.log
+
+# Temporary files
+*.tmp

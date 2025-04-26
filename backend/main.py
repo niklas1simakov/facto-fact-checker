@@ -1,8 +1,12 @@
+import os
 from urllib.parse import urlparse
 
 import fastapi
+from dotenv import load_dotenv
 from fastapi import HTTPException
 from pydantic import BaseModel, HttpUrl
+
+load_dotenv()
 
 app = fastapi.FastAPI()
 
