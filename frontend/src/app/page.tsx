@@ -1,59 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import FactCard, { FactCardProps } from "@/components/FactCard";
+import FactCard from "@/components/FactCard";
 import InputBar from "@/components/InputBar";
 import LiveStatusBar from "@/components/LiveStatusBar";
 import LoadingSteps, { LoadingStep } from "@/components/LoadingSteps";
 import React, { useState } from "react";
-
-const mockResults: FactCardProps[] = [
-  {
-    statement: "The Eiffel Tower is the tallest structure in Paris.",
-    probability: "uncertain",
-    summary: "The Eiffel Tower is not the tallest structure in Paris; the Tour Montparnasse is taller.",
-    sources: [
-      "https://www.example.com/eiffel-tower-height",
-      "https://www.example.com/paris-landmarks",
-    ],
-  },
-  {
-    statement: "Honey never spoils.",
-    probability: "high",
-    summary: "Honey can last indefinitely due to its low moisture content and acidic pH.",
-    sources: [
-      "https://www.example.com/honey-shelf-life",
-      "https://www.example.com/honey-facts",
-    ],
-  },
-  {
-    statement: "Bananas grow on trees.",
-    probability: "low",
-    summary: "Bananas grow on large herbaceous plants, not trees.",
-    sources: [
-      "https://www.example.com/banana-plant",
-      "https://www.example.com/banana-tree-myth",
-    ],
-  },
-  {
-    statement: "Water boils at 90°C at sea level.",
-    probability: "low",
-    summary: "Water boils at 100°C at sea level.",
-    sources: [
-      "https://www.example.com/boiling-point-water",
-      "https://www.example.com/sea-level-boiling-point",
-    ],
-  },
-  {
-    statement: "Humans swallow an average of eight spiders a year while sleeping.",
-    probability: "low",
-    summary: "This claim is a common urban legend and is not supported by evidence.",
-    sources: [
-      "https://www.example.com/spider-swallowing-myth",
-      "https://www.example.com/urban-legends-about-spiders",
-    ],
-  },
-];
+import { useFactCheckWebSocket } from "@/lib/useFactCheckWebSocket";
 
 const stepsText: LoadingStep[] = [
   { label: "Extract your statement" },
@@ -76,8 +29,16 @@ function isUrl(str: string) {
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
-  const [currentStep, setCurrentStep] = useState(0); // For demo, always 0
+  const { progress, results, error, sendFactCheck } = useFactCheckWebSocket();
   const steps = isUrl(inputValue) ? stepsUrl : stepsText;
+
+  // Handle input change and trigger fact check
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
+    if (value.trim()) {
+      sendFactCheck(value);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start md:pt-[30vh] bg-[#fff] px-4 py-12">
@@ -90,19 +51,41 @@ export default function Home() {
           priority
           className="mb-4"
         />
-        <p className="text-lg text-gray-500 mb-6 md:mb-12 text-center">Verify TikTok and Instagram Reel content authenticity</p>
+        <p className="text-lg text-gray-500 mb-6 md:mb-12 text-center">
+          Verify TikTok and Instagram Reel content authenticity
+        </p>
         <LiveStatusBar />
         <div className="w-full flex flex-col items-start">
-          <InputBar onInputChange={setInputValue} />
-          <div className="w-full flex justify-center">
-            <LoadingSteps steps={steps} currentStep={currentStep} />
-          </div>
+          <InputBar onInputChange={handleInputChange} />
+          {progress && (
+            <div className="w-full flex justify-center">
+              <LoadingSteps
+                steps={steps}
+                currentStep={
+                  progress.progress
+                    ? Math.floor((progress.progress / 100) * steps.length)
+                    : 0
+                }
+              />
+            </div>
+          )}
         </div>
       </div>
       <div className="flex flex-col gap-6 w-full max-w-2xl">
-        {mockResults.map((result, idx) => (
-          <FactCard key={idx} {...result} />
-        ))}
+        {error && <div className="text-red-500 text-center">{error}</div>}
+        {progress && progress.message && (
+          <div className="text-blue-500 text-center">{progress.message}</div>
+        )}
+        {results &&
+          results.map((result, idx) => (
+            <FactCard
+              key={idx}
+              statement={result.statement}
+              probability={result.probability as "high" | "low" | "uncertain"}
+              summary={result.reason}
+              sources={result.sources}
+            />
+          ))}
       </div>
       <div className="mt-12 flex items-center">
         <span className="text-sm text-gray-500">Powered by</span>
