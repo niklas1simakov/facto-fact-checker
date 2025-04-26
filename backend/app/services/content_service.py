@@ -86,8 +86,23 @@ class ContentService:
 
     def _get_tiktok_transcript(self, url: HttpUrl) -> str:
         """Get transcript from TikTok video."""
-        # TODO: Implement
-        return "This is a fake transcript"
+        tiktok_transcript_tool = (
+            "https://tiktok-transcript.p.rapidapi.com/transcribe-tiktok-audio"
+        )
+
+        payload = {"url": url}
+        headers = {
+            "x-rapidapi-key": RAPID_API_KEY,
+            "x-rapidapi-host": "tiktok-transcript.p.rapidapi.com",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+
+        response = requests.post(tiktok_transcript_tool, data=payload, headers=headers)
+
+        data = response.json()
+        transcript = data["response"]["text"]
+
+        return transcript
 
     def _check_statements(self, statements: List[str]) -> List[dict]:
         """Check multiple statements."""
