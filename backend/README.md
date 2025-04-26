@@ -24,13 +24,13 @@ uv sync
 Development mode:
 
 ```bash
-uv run fastapi dev main.py
+uv run run.py
 ```
 
 Production mode:
 
 ```bash
-uv run fastapi run main.py
+uv run run.py --prod
 ```
 
 5. Test the API endpoints
