@@ -1,7 +1,5 @@
 """Dependency injection functions."""
 
-from functools import lru_cache
-
 from app.services.content_service import ContentService
 from app.services.openai_service import OpenAIService
 

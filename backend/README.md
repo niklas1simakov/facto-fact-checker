@@ -37,10 +37,101 @@ uv run run.py --prod
 
 Check swagger UI: http://localhost:8000/docs
 
+## API Endpoints
+
+### REST API
+
+- `POST /fact-check` - Check facts in text or URLs (Instagram and TikTok supported)
+
+### WebSocket API
+
+The WebSocket API provides real-time progress updates during fact checking.
+
+- `ws://localhost:8000/ws/fact-check/{client_id}` - WebSocket endpoint for fact checking with progress updates
+
+To test the WebSocket endpoint, you can use the provided test client:
+
+```bash
+uv run test_ws_client.py [optional_client_id]
+```
+
+#### WebSocket Message Format
+
+**Request data format:**
+
+```json
+{
+  "data": "text to check or URL"
+}
+```
+
+**Response formats:**
+
+1. Connection established:
+
+```json
+{
+  "type": "connection",
+  "message": "Connected to fact checking service",
+  "client_id": "your-client-id"
+}
+```
+
+2. Extract text from video (if URL is provided):
+
+If instead of a URL a text is provided, the server will skip this step and continue with the next step.
+
+```json
+{
+  "type": "video-processing",
+  "message": "Extracting text from video"
+}
+```
+
+3. Progress updates: Extract statements from text:
+
+```json
+{
+  "type": "statement-extraction",
+  "stage": "extraction",
+  "message": "Extracting statements from text",
+  "progress": 30
+}
+```
+
+4. Completion:
+
+```json
+{
+  "type": "complete",
+  "message": "Fact checking complete",
+  "progress": 100,
+  "results": [
+    {
+      "statement": "Statement text",
+      "probability": "high|low|uncertain",
+      "reason": "Reason for determination",
+      "sources": ["source1", "source2"]
+    }
+  ]
+}
+```
+
+5. Error:
+
+```json
+{
+  "type": "error",
+  "message": "Error message"
+}
+```
+
 ## Development Notes
 
-- use ruff to format the code (recommended to use the `ruff` VSCode extension)
+- Use ruff to format the code (recommended to use the `ruff` VSCode extension)
 
 ```bash
 ruff check --fix .
 ```
+
+- This project doesn't use `__init__.py` files since it's built with Python 3.13+, which supports implicit namespace packages (PEP 420). Package directories without `__init__.py` files are automatically recognized as packages by Python 3.3+.
