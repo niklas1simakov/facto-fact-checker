@@ -1,6 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import FactCard, { FactCardProps } from "@/components/FactCard";
 import InputBar from "@/components/InputBar";
+import LiveStatusBar from "@/components/LiveStatusBar";
+import LoadingSteps, { LoadingStep } from "@/components/LoadingSteps";
+import React, { useState } from "react";
 
 const mockResults: FactCardProps[] = [
   {
@@ -50,9 +55,32 @@ const mockResults: FactCardProps[] = [
   },
 ];
 
+const stepsText: LoadingStep[] = [
+  { label: "Extract your statement" },
+  { label: "AI fact check all statements" },
+];
+const stepsUrl: LoadingStep[] = [
+  { label: "Fetch video data" },
+  { label: "Extract all statements" },
+  { label: "AI fact check all statements" },
+];
+
+function isUrl(str: string) {
+  try {
+    const url = new URL(str);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export default function Home() {
+  const [inputValue, setInputValue] = useState("");
+  const [currentStep, setCurrentStep] = useState(1); // For demo, always 0
+  const steps = isUrl(inputValue) ? stepsUrl : stepsText;
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start pt-[30vh] bg-[#fff] px-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-start md:pt-[30vh] bg-[#fff] px-4 py-12">
       <div className="flex flex-col items-center mb-8 w-full max-w-4xl">
         <Image
           src="/assets/facto_v2.png"
@@ -62,10 +90,16 @@ export default function Home() {
           priority
           className="mb-4"
         />
-        <p className="text-lg text-gray-500 mb-12 text-center">Verify TikTok and Instagram Reel content authenticity</p>
-        <InputBar />
+        <p className="text-lg text-gray-500 mb-6 md:mb-12 text-center">Verify TikTok and Instagram Reel content authenticity</p>
+        <LiveStatusBar />
+        <div className="w-full flex flex-col items-start">
+          <InputBar onInputChange={setInputValue} />
+          <div className="w-full flex justify-center">
+            <LoadingSteps steps={steps} currentStep={currentStep} />
+          </div>
+        </div>
       </div>
-      <div className="flex flex-col gap-4 w-full max-w-2xl">
+      <div className="flex flex-col gap-6 w-full max-w-2xl">
         {mockResults.map((result, idx) => (
           <FactCard key={idx} {...result} />
         ))}

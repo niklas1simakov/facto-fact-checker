@@ -54,11 +54,11 @@ const FactCard: React.FC<FactCardProps> = ({ statement, probability, summary, so
   const style = probabilityStyles[probability] || probabilityStyles.low;
   return (
     <div
-      className={`w-full rounded-[24px] px-8 py-5 flex items-center ${style.bg} ${style.border} border flex-row justify-between shadow-sm`}
+      className={`w-full rounded-[24px] px-4 py-4 md:px-8 md:py-5 flex flex-col md:flex-row items-stretch md:items-center ${style.bg} ${style.border} border shadow-sm`}
       style={{ minHeight: 90 }}
     >
-      <div className="flex flex-row items-center gap-4 w-full">
-        <div className="pt-1 flex items-center">{style.icon}</div>
+      <div className="flex flex-col md:flex-row items-center md:items-center gap-3 md:gap-4 w-full order-1 md:order-1">
+        <div className="pt-1 flex items-center justify-center md:justify-center shrink-0">{style.icon}</div>
         <div className="flex flex-col gap-1 w-full">
           <div className={`font-bold text-sm ${style.text}`}>{statement}</div>
           <div className={`text-sm font-normal ${style.text}`}>{summary}</div>
@@ -68,8 +68,8 @@ const FactCard: React.FC<FactCardProps> = ({ statement, probability, summary, so
           </div>
         </div>
       </div>
-      <div className="flex flex-col items-end h-full justify-center ml-4">
-        <Badge variant={probability} className="px-4 py-1.5 w-[150px] text-center">
+      <div className="flex flex-row md:flex-col justify-between md:justify-center items-center md:items-end mt-3 md:mt-0 md:ml-4 order-2 md:order-2 w-full md:w-auto">
+        <Badge variant={probability} className="px-4 py-1.5 w-full md:w-[150px] text-center">
           {style.label}
         </Badge>
       </div>
