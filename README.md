@@ -6,7 +6,7 @@ This is a Fast API backend for an AI facts and information checker. It is built 
 
 ## Requirements
 
-- UV package manager (Python 3.11+)
+- UV package manager (Python 3.13+)
 - OpenAI API key
 
 ## Setup
