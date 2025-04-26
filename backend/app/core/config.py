@@ -14,4 +14,4 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 DEFAULT_MODEL = "gpt-4o"
 
 # API configuration
-MAX_STATEMENTS = 5
+MAX_STATEMENTS = 10

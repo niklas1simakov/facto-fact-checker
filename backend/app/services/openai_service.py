@@ -1,4 +1,5 @@
 """Service for interacting with OpenAI API."""
+
 import requests
 from openai import OpenAI
 from openai.types.responses import ParsedResponse
@@ -53,6 +54,9 @@ class OpenAIService:
         )
 
         statements = response.output_parsed.statements
+
+        print(statements)
+
         return statements
 
     def check_statement(self, statement: str) -> tuple[StatementCheck, list[str]]:
