@@ -59,6 +59,12 @@ class WSProgressResponse(WSResponseBase):
     statements: Optional[List[str]] = None
 
 
+class WSVideoProcessingResponse(WSProgressResponse):
+    """Response for video processing updates."""
+
+    stage: Literal["video-processing"]
+
+
 class WSErrorResponse(WSResponseBase):
     """Response for error messages."""
 

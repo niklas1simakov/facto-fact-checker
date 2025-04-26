@@ -54,7 +54,17 @@ The WebSocket API provides real-time progress updates during fact checking.
 To test the WebSocket endpoint, you can use the provided test client:
 
 ```bash
+# Test with default text
 uv run test_ws_client.py [optional_client_id]
+
+# Test with Instagram URL
+uv run test_ws_client.py [optional_client_id] --instagram
+
+# Test with TikTok URL
+uv run test_ws_client.py [optional_client_id] --tiktok
+
+# Test with custom input
+uv run test_ws_client.py [optional_client_id] "Your custom text or URL here"
 ```
 
 #### WebSocket Message Format
@@ -79,29 +89,75 @@ uv run test_ws_client.py [optional_client_id]
 }
 ```
 
-2. Extract text from video (if URL is provided):
-
-If instead of a URL a text is provided, the server will skip this step and continue with the next step.
+2. Progress updates:
 
 ```json
 {
-  "type": "video-processing",
-  "message": "Extracting text from video"
+  "type": "progress",
+  "stage": "started",
+  "message": "Starting fact check process",
+  "progress": 0
 }
 ```
 
-3. Progress updates: Extract statements from text:
+3. Video processing (for URLs):
 
 ```json
 {
-  "type": "statement-extraction",
+  "type": "progress",
+  "stage": "video-processing",
+  "message": "Extracting text from video",
+  "progress": 10
+}
+```
+
+4. Transcript retrieval (for URLs):
+
+```json
+{
+  "type": "progress",
+  "stage": "video-processing",
+  "message": "Getting transcript from Instagram/TikTok",
+  "progress": 20
+}
+```
+
+5. Statement extraction:
+
+```json
+{
+  "type": "progress",
   "stage": "extraction",
-  "message": "Extracting statements from text",
-  "progress": 30
+  "message": "Extracting statements from text/transcript",
+  "progress": 30/40
 }
 ```
 
-4. Completion:
+6. Extraction complete:
+
+```json
+{
+  "type": "progress",
+  "stage": "extraction_complete",
+  "message": "Found X statements to verify",
+  "progress": 50,
+  "statements": ["statement1", "statement2", ...]
+}
+```
+
+7. Statement verification:
+
+```json
+{
+  "type": "progress",
+  "stage": "verification",
+  "message": "Checking statement X of Y",
+  "progress": 50-100,
+  "current_statement": "statement being checked"
+}
+```
+
+8. Completion:
 
 ```json
 {
@@ -119,7 +175,7 @@ If instead of a URL a text is provided, the server will skip this step and conti
 }
 ```
 
-5. Error:
+9. Error:
 
 ```json
 {
