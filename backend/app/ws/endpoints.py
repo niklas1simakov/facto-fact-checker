@@ -2,8 +2,10 @@
 
 import uuid
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
+from app.api.dependencies import get_ws_service
+from app.services.ws_service import WebSocketService
 from app.ws.manager import manager
 
 # Create router for WebSocket endpoints
@@ -11,7 +13,11 @@ router = APIRouter()
 
 
 @router.websocket("/ws/fact-check/{client_id}")
-async def websocket_fact_check(websocket: WebSocket, client_id: str):
+async def websocket_fact_check(
+    websocket: WebSocket,
+    client_id: str,
+    ws_service: WebSocketService = Depends(get_ws_service),
+):
     """
     WebSocket endpoint for fact checking with real-time progress updates.
     """
@@ -21,17 +27,35 @@ async def websocket_fact_check(websocket: WebSocket, client_id: str):
 
     await manager.connect(websocket, client_id)
     try:
+        # Send initial connection confirmation
+        await manager.send_progress(
+            client_id,
+            {
+                "type": "connection",
+                "message": "Connected to fact checking service",
+                "client_id": client_id,
+            },
+        )
+
         while True:
             # Wait for messages from the client
             data = await websocket.receive_json()
 
-            # Process user request
-            # TODO: Implement async processing with progress updates
+            # Start processing in the background
+            import asyncio
 
-            # Send back the client_id for future reference
-            await manager.send_progress(
-                client_id, {"type": "connection_established", "client_id": client_id}
-            )
+            asyncio.create_task(ws_service.process_request(client_id, data))
 
     except WebSocketDisconnect:
         manager.disconnect(client_id)
+    except Exception as e:
+        # Handle unexpected errors
+        try:
+            await manager.send_progress(
+                client_id, {"type": "error", "message": f"Unexpected error: {str(e)}"}
+            )
+        except:
+            # If we can't send the error, just disconnect
+            pass
+        finally:
+            manager.disconnect(client_id)
