@@ -52,22 +52,33 @@ const mockResults: FactCardProps[] = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#fff] px-4 py-12">
-      <div className="flex flex-col items-center mb-8">
+    <div className="min-h-screen flex flex-col items-center justify-start pt-[30vh] bg-[#fff] px-4 py-12">
+      <div className="flex flex-col items-center mb-8 w-full max-w-4xl">
         <Image
           src="/assets/facto_v2.png"
           alt="Facto Logo"
-          width={180}
-          height={60}
+          width={320}
+          height={107}
           priority
+          className="mb-4"
         />
-        <p className="text-lg text-gray-500 mb-6 text-center">Verify TikTok and Instagram Reel content authenticity</p>
+        <p className="text-lg text-gray-500 mb-12 text-center">Verify TikTok and Instagram Reel content authenticity</p>
         <InputBar />
       </div>
       <div className="flex flex-col gap-4 w-full max-w-2xl">
         {mockResults.map((result, idx) => (
           <FactCard key={idx} {...result} />
         ))}
+      </div>
+      <div className="mt-12 flex items-center">
+        <span className="text-sm text-gray-500">Powered by</span>
+        <Image
+          src="/assets/OpenAI-black-wordmark.png"
+          alt="OpenAI Logo"
+          width={100}
+          height={20}
+          className="opacity-80 -ml-1"
+        />
       </div>
     </div>
   );

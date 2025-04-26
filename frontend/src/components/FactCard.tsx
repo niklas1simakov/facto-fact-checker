@@ -2,6 +2,8 @@ import React from "react";
 import { PiSealCheck } from "react-icons/pi";
 import { IoWarningOutline } from "react-icons/io5";
 import { AiOutlineClose } from "react-icons/ai";
+import { Badge } from "./ui/badge";
+import { GoStop } from "react-icons/go";
 
 export interface FactCardProps {
   statement: string;
@@ -35,13 +37,13 @@ const probabilityStyles = {
     text: "text-red-500",
     badge: "border-red-500 text-red-500",
     badgeBg: "bg-transparent",
-    icon: <AiOutlineClose className="text-red-400" size={28} />, // x
+    icon: <GoStop className="text-red-400" size={28} />, // x
     label: "Low probability of truth",
   },
 };
 
 const SourcesIcon = () => (
-  <svg width="28" height="14" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle mr-1">
+  <svg width="36" height="18" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle mr-1">
     <circle cx="10" cy="10" r="7" fill="#fff" stroke="#CFCFCF" strokeWidth="2" />
     <circle cx="20" cy="10" r="7" fill="#fff" stroke="#CFCFCF" strokeWidth="2" />
     <circle cx="30" cy="10" r="7" fill="#fff" stroke="#CFCFCF" strokeWidth="2" />
@@ -55,11 +57,11 @@ const FactCard: React.FC<FactCardProps> = ({ statement, probability, summary, so
       className={`w-full rounded-[24px] px-8 py-5 flex items-center ${style.bg} ${style.border} border flex-row justify-between shadow-sm`}
       style={{ minHeight: 90 }}
     >
-      <div className="flex flex-row items-start gap-4 w-full">
-        <div className="pt-1 flex items-start">{style.icon}</div>
+      <div className="flex flex-row items-center gap-4 w-full">
+        <div className="pt-1 flex items-center">{style.icon}</div>
         <div className="flex flex-col gap-1 w-full">
-          <div className={`font-extrabold text-xl md:text-2xl ${style.text}`}>{statement}</div>
-          <div className={`text-base font-normal ${style.text}`}>{summary}</div>
+          <div className={`font-bold text-sm ${style.text}`}>{statement}</div>
+          <div className={`text-sm font-normal ${style.text}`}>{summary}</div>
           <div className="flex items-center gap-1 mt-1">
             <SourcesIcon />
             <span className={`font-medium text-sm ${style.text}`}>{sources.length}+ Sources</span>
@@ -67,12 +69,9 @@ const FactCard: React.FC<FactCardProps> = ({ statement, probability, summary, so
         </div>
       </div>
       <div className="flex flex-col items-end h-full justify-center ml-4">
-        <span
-          className={`px-4 py-1.5 rounded-xl border text-sm font-medium ${style.badge} ${style.badgeBg}`}
-          style={{ minWidth: 150, textAlign: "center" }}
-        >
+        <Badge variant={probability} className="px-4 py-1.5 w-[150px] text-center">
           {style.label}
-        </span>
+        </Badge>
       </div>
     </div>
   );

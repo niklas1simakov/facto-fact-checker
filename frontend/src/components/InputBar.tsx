@@ -1,24 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const InputBar: React.FC = () => {
   const [value, setValue] = useState("");
   return (
-    <form className="flex w-full max-w-xl gap-2">
-      <input
+    <form className="flex w-full max-w-4xl gap-2">
+      <Input
         type="text"
         value={value}
         onChange={e => setValue(e.target.value)}
         placeholder="Paste Your Statement or TikTok/ Instagram URL"
-        className="flex-1 px-4 h-12 py-2 rounded-lg border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-base bg-white"
+        className="flex-1 h-12 text-base"
       />
-      <button
+      <Button
         type="submit"
-        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 h-12 rounded-lg transition-colors shadow-sm text-base"
+        className="h-12 px-6 text-base font-semibold bg-[#007AFF] hover:bg-[#007AFF]/90 text-white"
       >
         Check
-      </button>
+      </Button>
     </form>
   );
 };
