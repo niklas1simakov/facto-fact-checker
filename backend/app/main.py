@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.fact_check import router as fact_check_router
+from app.docs.websocket import WEBSOCKET_DESCRIPTION
 from app.websockets.fact_check import router as ws_router
 
 
@@ -11,7 +12,8 @@ def create_app() -> FastAPI:
     """Create and configure FastAPI application."""
     app = FastAPI(
         title="Fact Checker API",
-        description="API for checking factual accuracy of content",
+        description="API for checking factual accuracy of content\n\n"
+        + WEBSOCKET_DESCRIPTION,
         version="0.1.0",
     )
 

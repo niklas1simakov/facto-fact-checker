@@ -11,7 +11,7 @@ from app.core.config import MAX_STATEMENTS
 from app.models.schemas import BodyData
 from app.services.content_service import ContentService
 
-router = APIRouter()
+router = APIRouter(tags=["websockets"])
 
 # Store active connections
 active_connections: Dict[str, WebSocket] = {}
@@ -25,6 +25,23 @@ async def websocket_fact_check(
 ):
     """
     WebSocket endpoint for fact checking with real-time progress updates.
+
+    Connect to this WebSocket endpoint to receive real-time updates during fact checking.
+
+    - **client_id**: A unique identifier for the client connection. If not provided or "undefined", a UUID will be generated.
+
+    The client should send a JSON message with the following structure:
+    ```json
+    {
+        "data": "Text content or URL to fact check"
+    }
+    ```
+
+    The server will send progress updates with the following types:
+    - **connection**: Initial connection confirmation
+    - **progress**: Updates during the fact checking process
+    - **error**: Error messages
+    - **complete**: Final results of the fact checking process
     """
     # Use client_id if provided, otherwise generate one
     if not client_id or client_id == "undefined":
