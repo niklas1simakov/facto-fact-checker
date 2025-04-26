@@ -22,6 +22,7 @@ class StatementCheck(BaseModel):
 
     probability: Literal["high", "low", "uncertain"]
     reason: str
+    sources: List[str]
 
 
 class Statement:
