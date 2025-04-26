@@ -8,12 +8,14 @@ This is a Fast API backend for an AI facts and information checker. It is built 
 
 - UV package manager (Python 3.13+)
 - OpenAI API key
+- Rapid API key (for instagram and tiktok scraping)
 
 ## Setup
 
 1. Clone the repository
 2. Add your OpenAI API key to the `.env` file (see `.env.example`) or set the `OPENAI_API_KEY` environment variable
-3. Install the dependencies
+3. Add your Rapid API key to the `.env` file (see `.env.example`). Get it from [Rapid API](https://rapidapi.com/hub)
+4. Install the dependencies
 
 ```bash
 uv sync

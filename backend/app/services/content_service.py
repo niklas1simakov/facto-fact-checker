@@ -3,8 +3,10 @@
 from typing import List
 from urllib.parse import urlparse
 
+import requests
 from pydantic import HttpUrl
 
+from app.core.config import RAPID_API_KEY
 from app.services.openai_service import OpenAIService
 
 
@@ -62,9 +64,25 @@ class ContentService:
         return self._check_statements(statements)
 
     def _get_instagram_transcript(self, url: HttpUrl) -> str:
-        """Get transcript from Instagram post."""
-        # TODO: Implement
-        return "This is a fake transcript"
+        instagram_transcript_tool = (
+            "https://instagram-video-transcript.p.rapidapi.com/transcribe-ig-video"
+        )
+
+        payload = {"url": url}
+        headers = {
+            "x-rapidapi-key": RAPID_API_KEY,
+            "x-rapidapi-host": "instagram-video-transcript.p.rapidapi.com",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+
+        response = requests.post(
+            instagram_transcript_tool, data=payload, headers=headers
+        )
+
+        data = response.json()
+        transcript = data["response"]["text"]
+
+        return transcript
 
     def _get_tiktok_transcript(self, url: HttpUrl) -> str:
         """Get transcript from TikTok video."""
