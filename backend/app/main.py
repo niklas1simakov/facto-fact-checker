@@ -1,15 +1,15 @@
 """Main application module."""
 
-import fastapi
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import api_router
-from app.ws.endpoints import router as ws_router
+from app.api.fact_check import router as fact_check_router
+from app.websockets.fact_check import router as ws_router
 
 
-def create_app() -> fastapi.FastAPI:
+def create_app() -> FastAPI:
     """Create and configure FastAPI application."""
-    app = fastapi.FastAPI(
+    app = FastAPI(
         title="Fact Checker API",
         description="API for checking factual accuracy of content",
         version="0.1.0",
@@ -24,10 +24,8 @@ def create_app() -> fastapi.FastAPI:
         allow_headers=["*"],
     )
 
-    # Include API routes
-    app.include_router(api_router)
-
-    # Include WebSocket routes
+    # Include routers directly
+    app.include_router(fact_check_router, tags=["fact-check"])
     app.include_router(ws_router)
 
     return app

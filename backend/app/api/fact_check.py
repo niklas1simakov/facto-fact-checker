@@ -9,8 +9,8 @@ from app.services.content_service import ContentService
 router = APIRouter()
 
 
-@router.post("/fake-check")
-async def fake_check(
+@router.post("/fact-check")
+async def fact_check(
     data: BodyData, content_service: ContentService = Depends(get_content_service)
 ):
     """
