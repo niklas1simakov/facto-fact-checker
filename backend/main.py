@@ -4,15 +4,21 @@ from urllib.parse import urlparse
 import fastapi
 from dotenv import load_dotenv
 from fastapi import HTTPException
+from openai import OpenAI
 from pydantic import BaseModel, HttpUrl
 
 load_dotenv()
 
 app = fastapi.FastAPI()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 class BodyData(BaseModel):
     data: HttpUrl | str
+
+
+class StatementList(BaseModel):
+    statements: list[str]
 
 
 @app.post("/fake-check")
@@ -91,8 +97,30 @@ def _get_tiktok_transcript(url: HttpUrl) -> str:
 
 
 def _extract_statements_from_text(text: str) -> list[str]:
-    # Implement using OpenAI API (the api returns a list of statements)
-    return ["This is a fake statement", "This is another fake statement"]
+    prompt = """
+    Extract the statements from the following text.
+    """
+
+    response = client.responses.parse(
+        model="gpt-4o",
+        input=[
+            {
+                "role": "system",
+                "content": prompt,
+            },
+            {
+                "role": "user",
+                "content": text,
+            },
+        ],
+        text_format=StatementList,
+        stream=False,
+        max_output_tokens=1000,
+    )
+
+    statements = response.output_parsed.statements
+    print(statements)
+    return statements
 
 
 def _check_statements(statements: list[str]) -> list[tuple[bool, str]]:
