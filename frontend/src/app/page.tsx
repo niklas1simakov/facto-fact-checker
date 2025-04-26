@@ -31,11 +31,12 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const { progress, results, error, sendFactCheck } = useFactCheckWebSocket();
   const steps = isUrl(inputValue) ? stepsUrl : stepsText;
+  const loading = !!progress && !results;
 
   // Handle input change and trigger fact check
   const handleInputChange = (value: string) => {
     setInputValue(value);
-    if (value.trim()) {
+    if (value.trim() && !loading) {
       sendFactCheck(value);
     }
   };
@@ -56,7 +57,7 @@ export default function Home() {
         </p>
         <LiveStatusBar />
         <div className="w-full flex flex-col items-start">
-          <InputBar onInputChange={handleInputChange} />
+          <InputBar onInputChange={handleInputChange} loading={loading} />
           {progress && (
             <div className="w-full flex justify-center">
               <LoadingSteps

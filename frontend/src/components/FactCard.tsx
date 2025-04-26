@@ -1,7 +1,6 @@
 import React from "react";
 import { PiSealCheck } from "react-icons/pi";
 import { IoWarningOutline } from "react-icons/io5";
-import { AiOutlineClose } from "react-icons/ai";
 import { Badge } from "./ui/badge";
 import { GoStop } from "react-icons/go";
 
@@ -43,14 +42,47 @@ const probabilityStyles = {
 };
 
 const SourcesIcon = () => (
-  <svg width="36" height="18" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle mr-1">
-    <circle cx="10" cy="10" r="7" fill="#fff" stroke="#CFCFCF" strokeWidth="2" />
-    <circle cx="20" cy="10" r="7" fill="#fff" stroke="#CFCFCF" strokeWidth="2" />
-    <circle cx="30" cy="10" r="7" fill="#fff" stroke="#CFCFCF" strokeWidth="2" />
+  <svg
+    width="36"
+    height="18"
+    viewBox="0 0 40 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="inline-block align-middle mr-1"
+  >
+    <circle
+      cx="10"
+      cy="10"
+      r="7"
+      fill="#fff"
+      stroke="#CFCFCF"
+      strokeWidth="2"
+    />
+    <circle
+      cx="20"
+      cy="10"
+      r="7"
+      fill="#fff"
+      stroke="#CFCFCF"
+      strokeWidth="2"
+    />
+    <circle
+      cx="30"
+      cy="10"
+      r="7"
+      fill="#fff"
+      stroke="#CFCFCF"
+      strokeWidth="2"
+    />
   </svg>
 );
 
-const FactCard: React.FC<FactCardProps> = ({ statement, probability, summary, sources }) => {
+const FactCard: React.FC<FactCardProps> = ({
+  statement,
+  probability,
+  summary,
+  sources,
+}) => {
   const style = probabilityStyles[probability] || probabilityStyles.low;
   return (
     <div
@@ -58,18 +90,25 @@ const FactCard: React.FC<FactCardProps> = ({ statement, probability, summary, so
       style={{ minHeight: 90 }}
     >
       <div className="flex flex-col md:flex-row items-center md:items-center gap-3 md:gap-4 w-full order-1 md:order-1">
-        <div className="pt-1 flex items-center justify-center md:justify-center shrink-0">{style.icon}</div>
+        <div className="pt-1 flex items-center justify-center md:justify-center shrink-0">
+          {style.icon}
+        </div>
         <div className="flex flex-col gap-1 w-full">
           <div className={`font-bold text-sm ${style.text}`}>{statement}</div>
           <div className={`text-sm font-normal ${style.text}`}>{summary}</div>
           <div className="flex items-center gap-1 mt-1">
             <SourcesIcon />
-            <span className={`font-medium text-sm ${style.text}`}>{sources.length}+ Sources</span>
+            <span className={`font-medium text-sm ${style.text}`}>
+              {sources.length}+ Sources
+            </span>
           </div>
         </div>
       </div>
       <div className="flex flex-row md:flex-col justify-between md:justify-center items-center md:items-end mt-3 md:mt-0 md:ml-4 order-2 md:order-2 w-full md:w-auto">
-        <Badge variant={probability} className="px-4 py-1.5 w-full md:w-[150px] text-center">
+        <Badge
+          variant={probability}
+          className="px-4 py-1.5 w-full md:w-[150px] text-center"
+        >
           {style.label}
         </Badge>
       </div>
@@ -77,4 +116,4 @@ const FactCard: React.FC<FactCardProps> = ({ statement, probability, summary, so
   );
 };
 
-export default FactCard; 
+export default FactCard;
