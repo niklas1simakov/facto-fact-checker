@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { PiSealCheck } from "react-icons/pi";
 import { IoWarningOutline } from "react-icons/io5";
 import { Badge } from "./ui/badge";
 import { GoStop } from "react-icons/go";
+import { FiGlobe } from "react-icons/fi";
 
 export interface FactCardProps {
   statement: string;
@@ -10,6 +12,22 @@ export interface FactCardProps {
   summary: string;
   sources: string[];
 }
+
+// Function to extract domain from URL
+const extractDomain = (url: string): string => {
+  try {
+    const domain = new URL(url).hostname;
+    return domain;
+  } catch {
+    // Return just the URL if it's not a valid URL
+    return url;
+  }
+};
+
+// Function to get favicon URL for a domain
+const getFaviconUrl = (domain: string): string => {
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+};
 
 const probabilityStyles = {
   high: {
@@ -84,6 +102,25 @@ const FactCard: React.FC<FactCardProps> = ({
   sources,
 }) => {
   const style = probabilityStyles[probability] || probabilityStyles.low;
+  const [faviconUrls, setFaviconUrls] = useState<string[]>([]);
+  const [domains, setDomains] = useState<string[]>([]);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    if (sources && sources.length > 0) {
+      // Process up to 3 sources
+      const extractedDomains = sources.slice(0, 3).map(extractDomain);
+      setDomains(extractedDomains);
+      const favicons = extractedDomains.map(getFaviconUrl);
+      setFaviconUrls(favicons);
+      setImageErrors({});
+    }
+  }, [sources]);
+
+  const handleImageError = (index: number) => {
+    setImageErrors((prev) => ({ ...prev, [index]: true }));
+  };
+
   return (
     <div
       className={`w-full rounded-[24px] px-4 py-4 md:px-8 md:py-5 flex flex-col md:flex-row items-stretch md:items-center ${style.bg} ${style.border} border shadow-sm`}
@@ -97,7 +134,33 @@ const FactCard: React.FC<FactCardProps> = ({
           <div className={`font-bold text-sm ${style.text}`}>{statement}</div>
           <div className={`text-sm font-normal ${style.text}`}>{summary}</div>
           <div className="flex items-center gap-1 mt-1">
-            <SourcesIcon />
+            {faviconUrls.length > 0 ? (
+              <div className="flex -space-x-2 mr-1">
+                {faviconUrls.map((url, index) => (
+                  <div
+                    key={index}
+                    className="w-5 h-5 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden relative hover:z-10 transition-transform hover:scale-110 cursor-pointer"
+                    title={domains[index]}
+                  >
+                    {imageErrors[index] ? (
+                      <FiGlobe size={12} className="text-gray-400" />
+                    ) : (
+                      <Image
+                        src={url}
+                        alt={domains[index]}
+                        width={16}
+                        height={16}
+                        className="object-contain"
+                        unoptimized
+                        onError={() => handleImageError(index)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <SourcesIcon />
+            )}
             <span className={`font-medium text-sm ${style.text}`}>
               {sources.length}+ Sources
             </span>
