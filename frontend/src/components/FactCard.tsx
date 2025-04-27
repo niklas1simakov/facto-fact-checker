@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { PiSealCheck } from "react-icons/pi";
 import { IoWarningOutline } from "react-icons/io5";
 import { Badge } from "./ui/badge";
 import { GoStop } from "react-icons/go";
 import { FiGlobe } from "react-icons/fi";
+import { HiDotsCircleHorizontal } from "react-icons/hi";
 
 export interface FactCardProps {
   statement: string;
@@ -106,10 +107,12 @@ const FactCard: React.FC<FactCardProps> = ({
   const [domains, setDomains] = useState<string[]>([]);
   const [sourceUrls, setSourceUrls] = useState<string[]>([]);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const [showAllSources, setShowAllSources] = useState(false);
+  const allSourcesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (sources && sources.length > 0) {
-      // Process up to 3 sources
+      // Process up to 3 sources for the main display
       const topSources = sources.slice(0, 3);
       setSourceUrls(topSources);
       const extractedDomains = topSources.map(extractDomain);
@@ -120,8 +123,31 @@ const FactCard: React.FC<FactCardProps> = ({
     }
   }, [sources]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        allSourcesRef.current &&
+        !allSourcesRef.current.contains(event.target as Node)
+      ) {
+        setShowAllSources(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleImageError = (index: number) => {
     setImageErrors((prev) => ({ ...prev, [index]: true }));
+  };
+
+  const toggleAllSources = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowAllSources(!showAllSources);
   };
 
   return (
@@ -136,7 +162,7 @@ const FactCard: React.FC<FactCardProps> = ({
         <div className="flex flex-col gap-1 w-full">
           <div className={`font-bold text-sm ${style.text}`}>{statement}</div>
           <div className={`text-sm font-normal ${style.text}`}>{summary}</div>
-          <div className="flex items-center gap-1 mt-1">
+          <div className="flex items-center gap-1 mt-1 relative">
             {faviconUrls.length > 0 ? (
               <div className="flex -space-x-2 mr-1">
                 {faviconUrls.map((url, index) => (
@@ -168,11 +194,88 @@ const FactCard: React.FC<FactCardProps> = ({
                     </div>
                   </a>
                 ))}
+
+                {sources.length > 3 && (
+                  <div className="relative" ref={allSourcesRef}>
+                    <div
+                      className="w-5 h-5 rounded-full border border-gray-200 bg-white flex items-center justify-center relative hover:z-10 transition-all hover:scale-110 cursor-pointer group"
+                      onClick={toggleAllSources}
+                      title="View all sources"
+                    >
+                      <HiDotsCircleHorizontal
+                        size={16}
+                        className="text-gray-400"
+                      />
+                      <span className="absolute -top-1 -right-1 bg-gray-500 text-white text-[9px] rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                        {sources.length - 3}
+                      </span>
+                      <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20">
+                        {sources.length - 3} more{" "}
+                        {sources.length - 3 === 1 ? "source" : "sources"}
+                      </span>
+                    </div>
+
+                    {showAllSources && (
+                      <div className="absolute top-7 left-0 md:left-0 right-0 md:right-auto bg-white rounded-lg shadow-md border border-gray-200 p-2 z-30 w-full md:w-64 max-h-60 md:max-h-80 overflow-y-auto">
+                        <div className="flex justify-between items-center mb-2 px-2">
+                          <h4 className="text-sm font-medium text-gray-700">
+                            All Sources
+                          </h4>
+                          <button
+                            onClick={toggleAllSources}
+                            className="text-gray-400 hover:text-gray-600"
+                            aria-label="Close sources list"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <ul className="flex flex-col gap-1">
+                          {sources.map((source, index) => {
+                            const domain = extractDomain(source);
+                            const faviconUrl = getFaviconUrl(domain);
+                            return (
+                              <li key={index}>
+                                <a
+                                  href={source}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded text-sm text-gray-600 transition-colors"
+                                >
+                                  <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                                    <Image
+                                      src={faviconUrl}
+                                      alt={domain}
+                                      width={16}
+                                      height={16}
+                                      className="object-contain"
+                                      unoptimized
+                                      onError={(e) => {
+                                        const img =
+                                          e.target as HTMLImageElement;
+                                        img.style.display = "none";
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="truncate">{domain}</span>
+                                </a>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <SourcesIcon />
             )}
-            <span className={`font-medium text-sm ${style.text}`}>
+            <span
+              className={`font-medium text-sm ${style.text} ${
+                sources.length > 3 ? "cursor-pointer hover:underline" : ""
+              }`}
+              onClick={sources.length > 3 ? toggleAllSources : undefined}
+            >
               {sources.length}+ Sources
             </span>
           </div>
