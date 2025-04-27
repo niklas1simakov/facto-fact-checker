@@ -70,7 +70,7 @@ export default function Home() {
           className="mb-4"
         />
         <p className="text-lg text-gray-500 mb-6 text-center">
-          Fighting missinformation, one claim at a time.
+          Fighting misinformation, one claim at a time.
         </p>
         <LiveStatusBar className="mb-6 md:mb-12" />
         <div className="w-full flex flex-col items-start">
