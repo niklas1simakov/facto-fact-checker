@@ -2,10 +2,11 @@ import React from "react";
 import { FaRegCheckCircle } from "react-icons/fa";
 import { ImSpinner2 } from "react-icons/im";
 import { motion, AnimatePresence } from "framer-motion";
+import { ProgressStage } from "../lib/useFactCheckWebSocket";
 
 export interface LoadingStep {
   label: string;
-  stage: string;
+  stage: ProgressStage;
 }
 
 export function isUrl(str: string) {
@@ -19,9 +20,9 @@ export function isUrl(str: string) {
 
 interface LoadingStepsProps {
   inputValue: string;
-  currentStage: string;
-  currentStatement?: string;
-  progressMessage?: string;
+  currentStage: ProgressStage;
+  statementIndex?: number;
+  totalStatements?: number;
   showResults?: boolean;
   children?: React.ReactNode; // For results
 }
@@ -29,8 +30,8 @@ interface LoadingStepsProps {
 const LoadingSteps: React.FC<LoadingStepsProps> = ({
   inputValue,
   currentStage,
-  currentStatement,
-  progressMessage,
+  statementIndex,
+  totalStatements,
   showResults,
   children,
 }) => {
@@ -62,20 +63,24 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
     }
   }
 
-  if (currentStage === "extraction") {
-    steps[isUrl(inputValue) ? 2 : 1] = {
-      label: `Extracting statements from text - ${progressMessage}`,
-      stage: "extraction",
+  // Update the verification step label to show progress through statements
+  if (
+    currentStage === "verification" &&
+    statementIndex !== undefined &&
+    totalStatements
+  ) {
+    const verificationStepIndex = isUrl(inputValue) ? 4 : 3;
+    steps[verificationStepIndex] = {
+      label: `Verifying statements (${statementIndex + 1}/${totalStatements})`,
+      stage: "verification",
     };
   }
 
-  if (currentStage === "extraction_complete") {
-    steps[isUrl(inputValue) ? 2 : 1] = {
-      label: `Extracting statements from text`,
-      stage: "extraction",
-    };
-    steps[isUrl(inputValue) ? 3 : 2] = {
-      label: `Statements extraction complete - ${progressMessage}`,
+  // Update extraction_complete to show total statements
+  if (currentStage === "extraction_complete" && totalStatements) {
+    const extractionCompleteIndex = isUrl(inputValue) ? 3 : 2;
+    steps[extractionCompleteIndex] = {
+      label: `Statements extraction complete (found ${totalStatements})`,
       stage: "extraction_complete",
     };
   }

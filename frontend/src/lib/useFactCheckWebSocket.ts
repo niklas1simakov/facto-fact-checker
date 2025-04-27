@@ -1,14 +1,20 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
+// Define progress stages for better type safety
+export type ProgressStage =
+  | "started"
+  | "video-processing"
+  | "extraction"
+  | "extraction_complete"
+  | "verification";
+
 export type FactCheckProgress = {
-  type: string;
-  stage?: string;
-  message: string;
-  progress?: number;
-  statements?: string[];
-  was_limited?: boolean;
-  original_count?: number;
-  current_statement?: string;
+  type: "progress";
+  stage: ProgressStage;
+  statementIndex?: number; // Which statement is being processed (0-based)
+  totalStatements?: number; // Total number of statements to check
+  statements?: string[]; // Only on extraction_complete
+  currentStatement?: string; // Current statement being verified
 };
 
 export type FactCheckResult = {
@@ -20,8 +26,6 @@ export type FactCheckResult = {
 
 export type FactCheckComplete = {
   type: "complete";
-  message: string;
-  progress: number;
   results: FactCheckResult[];
 };
 

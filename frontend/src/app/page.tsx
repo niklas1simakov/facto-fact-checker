@@ -9,6 +9,7 @@ import React, { useState } from "react";
 import {
   useFactCheckWebSocket,
   FactCheckResult,
+  ProgressStage,
 } from "@/lib/useFactCheckWebSocket";
 
 export default function Home() {
@@ -53,10 +54,9 @@ export default function Home() {
             <div className="w-full flex justify-center">
               <LoadingSteps
                 inputValue={inputValue}
-                progress={progress}
-                currentStage={progress?.stage || ""}
-                currentStatement={progress?.current_statement}
-                progressMessage={progress?.message}
+                currentStage={(progress?.stage as ProgressStage) || "started"}
+                statementIndex={progress?.statementIndex}
+                totalStatements={progress?.totalStatements}
                 showResults={!!results}
               >
                 {/* Results area with smooth transition */}

@@ -2,7 +2,7 @@
 
 import asyncio
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Literal, Optional
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
@@ -15,6 +15,62 @@ router = APIRouter(tags=["websockets"])
 
 # Store active connections
 active_connections: Dict[str, WebSocket] = {}
+
+# Define progress type for better type safety
+ProgressStage = Literal[
+    "started", "video-processing", "extraction", "extraction_complete", "verification"
+]
+
+
+class ProgressUpdate(Dict[str, Any]):
+    """Standard progress update message."""
+
+    def __init__(
+        self,
+        stage: ProgressStage,
+        statements: Optional[list[str]] = None,
+        statementIndex: Optional[int] = None,
+        totalStatements: Optional[int] = None,
+        currentStatement: Optional[str] = None,
+    ):
+        data = {
+            "type": "progress",
+            "stage": stage,
+        }
+
+        if statements is not None:
+            data["statements"] = statements
+
+        if totalStatements is not None:
+            data["totalStatements"] = totalStatements
+
+        if statementIndex is not None:
+            data["statementIndex"] = statementIndex
+
+        if currentStatement is not None:
+            data["currentStatement"] = currentStatement
+
+        super().__init__(data)
+
+
+class ErrorMessage(Dict[str, Any]):
+    def __init__(self, message: str):
+        super().__init__({"type": "error", "message": message})
+
+
+class CompleteMessage(Dict[str, Any]):
+    def __init__(self, results: list[Dict[str, Any]]):
+        super().__init__({"type": "complete", "results": results})
+
+
+class ConnectionMessage(Dict[str, Any]):
+    def __init__(self, client_id: str):
+        super().__init__(
+            {
+                "type": "connection",
+                "client_id": client_id,
+            }
+        )
 
 
 @router.websocket("/ws/fact-check/{client_id}")
@@ -58,14 +114,7 @@ async def websocket_fact_check(
 
     try:
         # Send initial connection confirmation
-        await send_progress(
-            client_id,
-            {
-                "type": "connection",
-                "message": "Connected to fact checking service",
-                "client_id": client_id,
-            },
-        )
+        await send_message(client_id, ConnectionMessage(client_id=client_id))
 
         while True:
             # Wait for messages from the client
@@ -79,9 +128,7 @@ async def websocket_fact_check(
     except Exception as e:
         # Handle unexpected errors
         try:
-            await send_progress(
-                client_id, {"type": "error", "message": f"Unexpected error: {str(e)}"}
-            )
+            await send_message(client_id, ErrorMessage(f"Unexpected error: {str(e)}"))
         except Exception:
             # If we can't send the error, just disconnect
             pass
@@ -89,8 +136,8 @@ async def websocket_fact_check(
             disconnect(client_id)
 
 
-async def send_progress(client_id: str, data: Dict[str, Any]):
-    """Send progress update to client."""
+async def send_message(client_id: str, data: Dict[str, Any]):
+    """Send message to client."""
     if client_id in active_connections:
         await active_connections[client_id].send_json(data)
 
@@ -108,22 +155,14 @@ async def process_request(
     try:
         # Extract data from the request
         if not data.get("data"):
-            await send_error(client_id, "No data provided")
+            await send_message(client_id, ErrorMessage("No data provided"))
             return
 
         # Create a BodyData object
         body_data = BodyData(data=data.get("data"))
 
-        # Send initial progress
-        await send_progress(
-            client_id,
-            {
-                "type": "progress",
-                "stage": "started",
-                "message": "Starting fact check process",
-                "progress": 0,
-            },
-        )
+        # Send initial progress - started
+        await send_message(client_id, ProgressUpdate(stage="started"))
 
         # Initial URL parsing for progress reporting
         from urllib.parse import urlparse
@@ -137,107 +176,63 @@ async def process_request(
                 body_data.data
             ) or content_service._is_tiktok_url(body_data.data):
                 # Notify about video processing
-                await send_progress(
-                    client_id,
-                    {
-                        "type": "progress",
-                        "stage": "video-processing",
-                        "message": "Extracting text from video",
-                        "progress": 10,
-                    },
-                )
+                await send_message(client_id, ProgressUpdate(stage="video-processing"))
 
                 # Get transcript based on URL type
                 if content_service._is_instagram_url(body_data.data):
-                    await send_progress(
-                        client_id,
-                        {
-                            "type": "progress",
-                            "stage": "video-processing",
-                            "message": "Getting transcript from Instagram",
-                            "progress": 20,
-                        },
-                    )
                     transcript = content_service._get_instagram_transcript(
                         body_data.data
                     )
                 else:
-                    await send_progress(
-                        client_id,
-                        {
-                            "type": "progress",
-                            "stage": "video-processing",
-                            "message": "Getting transcript from TikTok",
-                            "progress": 20,
-                        },
-                    )
                     transcript = content_service._get_tiktok_transcript(body_data.data)
 
                 # Extract statements from transcript
-                await send_progress(
-                    client_id,
-                    {
-                        "type": "progress",
-                        "stage": "extraction",
-                        "message": "Extracting statements from transcript",
-                        "progress": 40,
-                    },
-                )
+                await send_message(client_id, ProgressUpdate(stage="extraction"))
                 statements = content_service.openai_service.extract_statements(
                     transcript
                 )
             else:
-                await send_error(
-                    client_id, "Invalid URL (only Instagram and TikTok are supported)"
+                await send_message(
+                    client_id,
+                    ErrorMessage(
+                        "Invalid URL (only Instagram and TikTok are supported)"
+                    ),
                 )
                 return
         else:
             # Process as text
-            await send_progress(
-                client_id,
-                {
-                    "type": "progress",
-                    "stage": "extraction",
-                    "message": "Extracting statements from text",
-                    "progress": 30,
-                },
-            )
+            await send_message(client_id, ProgressUpdate(stage="extraction"))
             statements = content_service.openai_service.extract_statements(
                 str(body_data.data)
             )
 
         # Limit number of statements
-        original_count = len(statements)
+        # TODO: add back in and notify user if statements were limited
+        # original_count = len(statements)
         statements = statements[:MAX_STATEMENTS]
-        was_limited = original_count > MAX_STATEMENTS
+        # was_limited = original_count > MAX_STATEMENTS
 
-        await send_progress(
+        await send_message(
             client_id,
-            {
-                "type": "progress",
-                "stage": "extraction_complete",
-                "message": f"Found {original_count} statements to verify{f', limiting to {MAX_STATEMENTS}' if was_limited else ''}",
-                "progress": 50,
-                "statements": statements,
-                "was_limited": was_limited,
-                "original_count": original_count,
-            },
+            ProgressUpdate(
+                stage="extraction_complete",
+                statements=statements,
+                totalStatements=len(statements),
+            ),
         )
 
         # Check each statement
         results = []
         for i, statement in enumerate(statements):
             # Send progress update for each statement
-            percent_complete = 50 + (i / len(statements) * 50)
-            await send_progress(
+            await send_message(
                 client_id,
-                {
-                    "type": "progress",
-                    "stage": "verification",
-                    "message": f"Checking statement {i + 1} of {len(statements)}",
-                    "progress": percent_complete,
-                    "current_statement": statement,
-                },
+                ProgressUpdate(
+                    stage="verification",
+                    statementIndex=i,
+                    totalStatements=len(statements),
+                    currentStatement=statement,
+                ),
             )
 
             # Give a small delay to allow progress updates to be seen
@@ -258,20 +253,14 @@ async def process_request(
             results.append(result)
 
         # Send final results
-        await send_progress(
-            client_id,
-            {
-                "type": "complete",
-                "message": "Fact checking complete",
-                "progress": 100,
-                "results": results,
-            },
-        )
+        await send_message(client_id, CompleteMessage(results=results))
 
     except Exception as e:
-        await send_error(client_id, f"Error during fact checking: {str(e)}")
+        await send_message(
+            client_id, ErrorMessage(f"Error during fact checking: {str(e)}")
+        )
 
 
 async def send_error(client_id: str, message: str):
     """Send error message to client."""
-    await send_progress(client_id, {"type": "error", "message": message})
+    await send_message(client_id, ErrorMessage(message))
