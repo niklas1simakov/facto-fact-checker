@@ -39,7 +39,7 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
   if (isUrl(inputValue)) {
     steps = [
       { label: "Starting fact check process", stage: "started" },
-      { label: "Transcripting video", stage: "video-processing" },
+      { label: "Transcribing video", stage: "video-processing" },
       { label: "Extracting statements from transcript", stage: "extraction" },
       { label: "Statements extraction complete", stage: "extraction_complete" },
       { label: "Verifying statements", stage: "verification" },
