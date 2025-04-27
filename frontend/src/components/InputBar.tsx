@@ -25,7 +25,7 @@ const InputBar: React.FC<InputBarProps> = ({
 
   return (
     <form
-      className="flex flex-col sm:flex-row w-full max-w-4xl gap-2 sm:gap-2"
+      className="flex flex-col sm:flex-row w-full max-w-4xl gap-2 mb-6 sm:gap-2"
       onSubmit={handleSubmit}
     >
       <Input

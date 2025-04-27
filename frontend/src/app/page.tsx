@@ -49,8 +49,7 @@ export default function Home() {
 
     setInputValue(value);
     setIsChecking(true);
-    // Reset send flag for new request
-    setHasSent(false);
+    setHasSent(false); // Reset send flag for new request
 
     // If already connected, send immediately and mark as sent
     if (connected) {
@@ -66,7 +65,7 @@ export default function Home() {
           src="/assets/facto_v2.png"
           alt="Facto Logo"
           width={320}
-          height={107}
+          height={95}
           priority
           className="mb-4"
         />
@@ -77,9 +76,10 @@ export default function Home() {
         <div className="w-full flex flex-col items-start">
           <InputBar onInputChange={handleInputChange} loading={isChecking} />
 
-          {!connected && (
+          {hasSent && !connected && (
             <div className="w-full mt-4 text-red-500 text-center">
-              WebSocket connection error. Please refresh the page and try again.
+              WebSocket connection error. Please try again in a moment & check
+              your internet connection.
             </div>
           )}
 
@@ -138,14 +138,14 @@ export default function Home() {
           </AnimatePresence>
         </div>
       </div>
-      <div className="mt-12 flex items-center">
-        <span className="text-sm text-gray-500">Powered by</span>
+      <div className="flex items-center mt-auto pt-6">
+        <span className="text-sm text-gray-500 pt-0.5">Powered by</span>
         <Image
           src="/assets/OpenAI-black-wordmark.png"
           alt="OpenAI Logo"
           width={100}
-          height={20}
-          className="opacity-80 -ml-1"
+          height={45}
+          className="opacity-80 -ml-2"
         />
       </div>
     </div>

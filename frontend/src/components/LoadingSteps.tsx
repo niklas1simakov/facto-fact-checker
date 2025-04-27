@@ -67,7 +67,7 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
     if (displayedStep < targetStep) {
       const timeout = setTimeout(
         () => setDisplayedStep(displayedStep + 1),
-        800
+        600
       );
       return () => clearTimeout(timeout);
     } else if (displayedStep > targetStep) {
@@ -106,7 +106,7 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex flex-col gap-2 mt-2 ml-0 w-fit"
+        className="flex flex-col gap-2 w-fit"
       >
         {steps.map((step, idx) => (
           <motion.div
