@@ -6,6 +6,8 @@ Facto is an AI powered fact checker that checks the accuracy of statements extra
 
 Deployed at [https://facto-fact-checker-webapp.onrender.com/](https://facto-fact-checker-webapp.onrender.com/)
 
+You can finde the pitch deck here: 
+
 ## Tech Stack
 
 ### Backend
