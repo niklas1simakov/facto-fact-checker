@@ -4,6 +4,8 @@
 
 Facto is an AI powered fact checker that checks the accuracy of statements extracted from instagram or ticktok videos, or any other text source.
 
+Deployed at [https://facto-fact-checker-webapp.onrender.com/](https://facto-fact-checker-webapp.onrender.com/)
+
 ## Tech Stack
 
 ### Backend
