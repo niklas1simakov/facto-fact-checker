@@ -67,7 +67,7 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
     if (displayedStep < targetStep) {
       const timeout = setTimeout(
         () => setDisplayedStep(displayedStep + 1),
-        600
+        300
       );
       return () => clearTimeout(timeout);
     } else if (displayedStep > targetStep) {
