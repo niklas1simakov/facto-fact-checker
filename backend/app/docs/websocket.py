@@ -8,7 +8,7 @@ Connect to the WebSocket endpoint to receive real-time updates during the fact c
 
 ### Connection
 ```
-ws://{host}/ws/fact-check/{client_id}
+wss://{host}/ws/fact-check/{client_id}
 ```
 
 - **client_id**: A unique identifier for the client connection. If not provided or "undefined", a UUID will be generated.

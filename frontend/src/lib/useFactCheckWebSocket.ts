@@ -47,10 +47,12 @@ export function useFactCheckWebSocket(clientId?: string) {
   const wsRef = useRef<WebSocket | null>(null);
 
   // Compose the WebSocket URL (replace http or https with ws or wss)
-  const wsUrl = `${process.env.NEXT_PUBLIC_BACKEND_HOST?.replace(
-    /^https?/,
-    "ws"
-  )}/ws/fact-check/${clientId || "undefined"}`;
+  const wsUrl = process.env.NEXT_PUBLIC_BACKEND_HOST
+    ? `${process.env.NEXT_PUBLIC_BACKEND_HOST.replace(/^http:/, "ws:").replace(
+        /^https:/,
+        "wss:"
+      )}/ws/fact-check/${clientId || "undefined"}`
+    : `ws://localhost:8000/ws/fact-check/${clientId || "undefined"}`;
 
   // Log the WebSocket URL for debugging
   useEffect(() => {

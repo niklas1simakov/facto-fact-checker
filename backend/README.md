@@ -49,7 +49,8 @@ Check swagger UI: http://localhost:8000/docs
 
 The WebSocket API provides real-time progress updates during fact checking.
 
-- `ws://localhost:8000/ws/fact-check/{client_id}` - WebSocket endpoint for fact checking with progress updates
+- `wss://localhost:8000/ws/fact-check/{client_id}` - WebSocket endpoint for fact checking with progress updates
+  (Note: Use `ws://` for local development and `wss://` for production)
 
 To test the WebSocket endpoint, you can use the provided test client:
 

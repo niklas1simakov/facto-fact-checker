@@ -3,6 +3,7 @@
 import asyncio
 import json
 import sys
+import os
 
 import websockets
 
@@ -11,9 +12,17 @@ async def test_ws_client(data, client_id="test-client"):
     """Test WebSocket client interaction with fact-checking service."""
     print("Connecting to WebSocket server...")
 
+    # Use secure WebSocket in production, insecure for local testing
+    protocol = "wss" if os.getenv("ENVIRONMENT") == "production" else "ws"
+    host = (
+        "localhost:8000"
+        if os.getenv("ENVIRONMENT") != "production"
+        else "facto-fact-checker.onrender.com"
+    )
+
     try:
         async with websockets.connect(
-            f"ws://localhost:8000/ws/fact-check/{client_id}"
+            f"{protocol}://{host}/ws/fact-check/{client_id}"
         ) as websocket:
             print(f"Connected with client ID: {client_id}")
 
