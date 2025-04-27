@@ -40,6 +40,11 @@ async def websocket_fact_check(
     The server will send progress updates with the following types:
     - **connection**: Initial connection confirmation
     - **progress**: Updates during the fact checking process
+        - **started**: Starting the fact checking process
+        - **video-processing**: Processing a video (only for Instagram and TikTok URLs)
+        - **extraction**: Extracting statements from the content
+        - **extraction_complete**: Extraction complete
+        - **verification**: Verifying statements
     - **error**: Error messages
     - **complete**: Final results of the fact checking process
     """

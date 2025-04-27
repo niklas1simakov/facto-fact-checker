@@ -1,9 +1,12 @@
 # To Do's
 
+- [ ] Fix steps in loading steps
+- [ ] Move OpenAI logo down
+
 - [x] Get transcripts from instagram & ticktok (use APIs)
 - [x] Check websockets connection
-- [ ] Connect frontend to backend websockets (use websocket client) (other project)
+- [x] Connect frontend to backend websockets (use websocket client) (other project)
 
 Optional:
 
-- [ ] Notify user that the statements are shortened (if shortened)
+- [x] Notify user that the statements are shortened (if shortened)

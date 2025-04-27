@@ -6,21 +6,22 @@ import InputBar from "@/components/InputBar";
 import LiveStatusBar from "@/components/LiveStatusBar";
 import LoadingSteps from "@/components/LoadingSteps";
 import React, { useState } from "react";
-import { useFactCheckWebSocket } from "@/lib/useFactCheckWebSocket";
-
-function isUrl(str: string) {
-  try {
-    const url = new URL(str);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+import {
+  useFactCheckWebSocket,
+  FactCheckResult,
+} from "@/lib/useFactCheckWebSocket";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
-  const { progress, results, error, sendFactCheck } = useFactCheckWebSocket();
-  const mode = isUrl(inputValue) ? "url" : "text";
+  const {
+    progress,
+    results: rawResults,
+    error,
+    sendFactCheck,
+  } = useFactCheckWebSocket();
+  const results: FactCheckResult[] | null = rawResults as
+    | FactCheckResult[]
+    | null;
   const loading = !!progress && !results;
 
   // Handle input change and trigger fact check
@@ -30,9 +31,6 @@ export default function Home() {
       sendFactCheck(value);
     }
   };
-
-  // Determine number of statements for steps
-  const numStatements = progress?.statements?.length || 1;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start md:pt-[30vh] bg-[#fff] px-4 py-12">
@@ -54,29 +52,44 @@ export default function Home() {
           {loading && (
             <div className="w-full flex justify-center">
               <LoadingSteps
-                mode={mode}
+                inputValue={inputValue}
                 progress={progress}
-                numStatements={numStatements}
-              />
+                currentStage={progress?.stage || ""}
+                currentStatement={progress?.current_statement}
+                progressMessage={progress?.message}
+                showResults={!!results}
+              >
+                {/* Results area with smooth transition */}
+                <div className="flex flex-col gap-6 w-full max-w-2xl">
+                  {error && (
+                    <div className="text-red-500 text-center">{error}</div>
+                  )}
+                  {Array.isArray(results) &&
+                    (results as FactCheckResult[]).length === 0 && (
+                      <div className="text-yellow-500 text-center">
+                        No statements determined, please try again.
+                      </div>
+                    )}
+                  {Array.isArray(results) &&
+                    (results as FactCheckResult[]).length > 0 &&
+                    (results as FactCheckResult[]).map(
+                      (result: FactCheckResult, idx: number) => (
+                        <FactCard
+                          key={idx}
+                          statement={result.statement}
+                          probability={
+                            result.probability as "high" | "low" | "uncertain"
+                          }
+                          summary={result.reason}
+                          sources={result.sources}
+                        />
+                      )
+                    )}
+                </div>
+              </LoadingSteps>
             </div>
           )}
         </div>
-      </div>
-      <div className="flex flex-col gap-6 w-full max-w-2xl">
-        {error && <div className="text-red-500 text-center">{error}</div>}
-        {progress && progress.message && (
-          <div className="text-blue-500 text-center">{progress.message}</div>
-        )}
-        {results &&
-          results.map((result, idx) => (
-            <FactCard
-              key={idx}
-              statement={result.statement}
-              probability={result.probability as "high" | "low" | "uncertain"}
-              summary={result.reason}
-              sources={result.sources}
-            />
-          ))}
       </div>
       <div className="mt-12 flex items-center">
         <span className="text-sm text-gray-500">Powered by</span>
