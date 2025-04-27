@@ -32,7 +32,7 @@ class OpenAIService:
         3. Each extracted statement must be a full, clear sentence that can be independently checked.
         4. Extract a maximum of 10 statements. If there are more, select the most important, verifiable, and relevant ones.
         5. Preserve the original meaning of the statements without adding or changing facts.
-        6. If no fact-checkable statements are found, return an empty list.
+        6. Only if no statements are found, return an empty list. Try to extract fact-checkable statements from the text.
         Return only a list of strings.
         """
 
