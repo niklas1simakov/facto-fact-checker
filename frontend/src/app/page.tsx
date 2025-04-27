@@ -4,19 +4,9 @@ import Image from "next/image";
 import FactCard from "@/components/FactCard";
 import InputBar from "@/components/InputBar";
 import LiveStatusBar from "@/components/LiveStatusBar";
-import LoadingSteps, { LoadingStep } from "@/components/LoadingSteps";
+import LoadingSteps from "@/components/LoadingSteps";
 import React, { useState } from "react";
 import { useFactCheckWebSocket } from "@/lib/useFactCheckWebSocket";
-
-const stepsText: LoadingStep[] = [
-  { label: "Extract your statement" },
-  { label: "AI fact check all statements" },
-];
-const stepsUrl: LoadingStep[] = [
-  { label: "Fetch video data" },
-  { label: "Extract all statements" },
-  { label: "AI fact check all statements" },
-];
 
 function isUrl(str: string) {
   try {
@@ -30,7 +20,7 @@ function isUrl(str: string) {
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const { progress, results, error, sendFactCheck } = useFactCheckWebSocket();
-  const steps = isUrl(inputValue) ? stepsUrl : stepsText;
+  const mode = isUrl(inputValue) ? "url" : "text";
   const loading = !!progress && !results;
 
   // Handle input change and trigger fact check
@@ -40,6 +30,9 @@ export default function Home() {
       sendFactCheck(value);
     }
   };
+
+  // Determine number of statements for steps
+  const numStatements = progress?.statements?.length || 1;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start md:pt-[30vh] bg-[#fff] px-4 py-12">
@@ -58,15 +51,12 @@ export default function Home() {
         <LiveStatusBar />
         <div className="w-full flex flex-col items-start">
           <InputBar onInputChange={handleInputChange} loading={loading} />
-          {progress && (
+          {loading && (
             <div className="w-full flex justify-center">
               <LoadingSteps
-                steps={steps}
-                currentStep={
-                  progress.progress
-                    ? Math.floor((progress.progress / 100) * steps.length)
-                    : 0
-                }
+                mode={mode}
+                progress={progress}
+                numStatements={numStatements}
               />
             </div>
           )}
