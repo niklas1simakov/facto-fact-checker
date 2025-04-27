@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaRegCheckCircle } from "react-icons/fa";
 import { ImSpinner2 } from "react-icons/im";
 import { motion, AnimatePresence } from "framer-motion";
-import { ProgressStage } from "../lib/useFactCheckWebSocket";
+import { ProgressStage } from "@/lib/useFactCheckWebSocket";
 
 export interface LoadingStep {
   label: string;
@@ -23,8 +23,6 @@ interface LoadingStepsProps {
   currentStage: ProgressStage;
   statementIndex?: number;
   totalStatements?: number;
-  showResults?: boolean;
-  children?: React.ReactNode; // For results
 }
 
 const LoadingSteps: React.FC<LoadingStepsProps> = ({
@@ -32,9 +30,10 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
   currentStage,
   statementIndex,
   totalStatements,
-  showResults,
-  children,
 }) => {
+  // Local state to delay progression between steps
+  const [displayedStep, setDisplayedStep] = useState(0);
+
   let steps: LoadingStep[] = [];
 
   if (isUrl(inputValue)) {
@@ -54,14 +53,27 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
     ];
   }
 
-  // Find the current step index
-  let currentStep = 0;
+  // Determine target step index based on currentStage
+  let targetStep = 0;
   for (let i = 0; i < steps.length; i++) {
     if (steps[i].stage === currentStage) {
-      currentStep = i;
+      targetStep = i;
       break;
     }
   }
+
+  // Delay progression between steps to let animations run
+  useEffect(() => {
+    if (displayedStep < targetStep) {
+      const timeout = setTimeout(
+        () => setDisplayedStep(displayedStep + 1),
+        800
+      );
+      return () => clearTimeout(timeout);
+    } else if (displayedStep > targetStep) {
+      setDisplayedStep(targetStep);
+    }
+  }, [displayedStep, targetStep, currentStage]);
 
   // Update the verification step label to show progress through statements
   if (
@@ -85,9 +97,17 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
     };
   }
 
+  // Render only the steps; mounting and unmounting (and fade-out) controlled by parent
   return (
-    <div className="flex flex-col gap-2 mt-2 ml-0 w-fit">
-      <AnimatePresence>
+    <AnimatePresence>
+      <motion.div
+        key="loading-steps"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col gap-2 mt-2 ml-0 w-fit"
+      >
         {steps.map((step, idx) => (
           <motion.div
             key={step.label + idx}
@@ -97,39 +117,24 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4, delay: idx * 0.08 }}
           >
-            {idx < currentStep ? (
+            {idx < displayedStep ? (
               <FaRegCheckCircle className="text-black" size={18} />
-            ) : idx === currentStep ? (
+            ) : idx === displayedStep ? (
               <ImSpinner2 className="animate-spin text-black" size={18} />
             ) : (
               <span className="inline-block w-[18px] h-[18px] rounded-full border-2 border-gray-300" />
             )}
             <span
               className={`text-base font-medium ${
-                idx <= currentStep ? "text-black" : "text-gray-400"
+                idx <= displayedStep ? "text-black" : "text-gray-400"
               }`}
             >
               {step.label}
             </span>
           </motion.div>
         ))}
-      </AnimatePresence>
-      {/* Smooth transition to results */}
-      <AnimatePresence>
-        {showResults && (
-          <motion.div
-            key="results"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.5 }}
-            className="mt-8"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

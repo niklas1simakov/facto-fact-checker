@@ -14,22 +14,24 @@ const InputBar: React.FC<InputBarProps> = ({
   loading = false,
 }) => {
   const [value, setValue] = useState("");
+
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loading && onInputChange) {
+      onInputChange(value);
+    }
+  };
+
   return (
     <form
       className="flex flex-col sm:flex-row w-full max-w-4xl gap-2 sm:gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!loading) {
-          onInputChange?.(value);
-        }
-      }}
+      onSubmit={handleSubmit}
     >
       <Input
         type="text"
         value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-        }}
+        onChange={(e) => setValue(e.target.value)}
         placeholder="Paste Your Statement or TikTok/ Instagram Reel URL"
         className="w-full h-12 text-base"
         disabled={loading}
@@ -37,9 +39,9 @@ const InputBar: React.FC<InputBarProps> = ({
       <Button
         type="submit"
         className="w-full sm:w-auto h-12 px-6 text-base font-semibold bg-[#007AFF] hover:bg-[#007AFF]/90 text-white"
-        disabled={loading}
+        disabled={loading || !value.trim()}
       >
-        Check
+        {loading ? "Checking..." : "Check"}
       </Button>
     </form>
   );

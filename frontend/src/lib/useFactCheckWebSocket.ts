@@ -46,9 +46,9 @@ export function useFactCheckWebSocket(clientId?: string) {
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Compose the WebSocket URL
+  // Compose the WebSocket URL (replace http or https with ws or wss)
   const wsUrl = `${process.env.NEXT_PUBLIC_BACKEND_HOST?.replace(
-    /^http/,
+    /^https?/,
     "ws"
   )}/ws/fact-check/${clientId || "undefined"}`;
 
@@ -96,7 +96,6 @@ export function useFactCheckWebSocket(clientId?: string) {
     return () => {
       ws.close();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsUrl]);
 
   // Send data to backend

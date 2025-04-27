@@ -5,31 +5,57 @@ import FactCard from "@/components/FactCard";
 import InputBar from "@/components/InputBar";
 import LiveStatusBar from "@/components/LiveStatusBar";
 import LoadingSteps from "@/components/LoadingSteps";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   useFactCheckWebSocket,
   FactCheckResult,
   ProgressStage,
 } from "@/lib/useFactCheckWebSocket";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
+  const [hasSent, setHasSent] = useState(false);
   const {
+    connected,
     progress,
     results: rawResults,
     error,
     sendFactCheck,
   } = useFactCheckWebSocket();
-  const results: FactCheckResult[] | null = rawResults as
-    | FactCheckResult[]
-    | null;
-  const loading = !!progress && !results;
+  const results = rawResults as FactCheckResult[] | null;
+
+  // Queue send until WebSocket is connected
+  useEffect(() => {
+    if (isChecking && connected && !hasSent) {
+      sendFactCheck(inputValue);
+      setHasSent(true);
+    }
+  }, [isChecking, connected, hasSent, inputValue, sendFactCheck]);
+
+  // Reset checking state when results or error arrive
+  useEffect(() => {
+    if (results || error) {
+      setIsChecking(false);
+    }
+  }, [results, error]);
 
   // Handle input change and trigger fact check
   const handleInputChange = (value: string) => {
+    if (!value.trim()) {
+      return;
+    }
+
     setInputValue(value);
-    if (value.trim() && !loading) {
+    setIsChecking(true);
+    // Reset send flag for new request
+    setHasSent(false);
+
+    // If already connected, send immediately and mark as sent
+    if (connected) {
       sendFactCheck(value);
+      setHasSent(true);
     }
   };
 
@@ -49,46 +75,67 @@ export default function Home() {
         </p>
         <LiveStatusBar className="mb-6 md:mb-12" />
         <div className="w-full flex flex-col items-start">
-          <InputBar onInputChange={handleInputChange} loading={loading} />
-          {loading && (
-            <div className="w-full flex justify-center">
-              <LoadingSteps
-                inputValue={inputValue}
-                currentStage={(progress?.stage as ProgressStage) || "started"}
-                statementIndex={progress?.statementIndex}
-                totalStatements={progress?.totalStatements}
-                showResults={!!results}
+          <InputBar onInputChange={handleInputChange} loading={isChecking} />
+
+          {!connected && (
+            <div className="w-full mt-4 text-red-500 text-center">
+              WebSocket connection error. Please refresh the page and try again.
+            </div>
+          )}
+
+          <AnimatePresence mode="wait">
+            {isChecking && !results && !error && (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full flex justify-center"
               >
-                {/* Results area with smooth transition */}
+                <LoadingSteps
+                  inputValue={inputValue}
+                  currentStage={(progress?.stage as ProgressStage) || "started"}
+                  statementIndex={progress?.statementIndex}
+                  totalStatements={progress?.totalStatements}
+                />
+              </motion.div>
+            )}
+            {(results || error) && (
+              <motion.div
+                key="results"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full flex justify-center"
+              >
                 <div className="flex flex-col gap-6 w-full max-w-2xl">
                   {error && (
                     <div className="text-red-500 text-center">{error}</div>
                   )}
-                  {Array.isArray(results) &&
-                    (results as FactCheckResult[]).length === 0 && (
-                      <div className="text-yellow-500 text-center">
-                        No statements determined, please try again.
-                      </div>
-                    )}
-                  {Array.isArray(results) &&
-                    (results as FactCheckResult[]).length > 0 &&
-                    (results as FactCheckResult[]).map(
-                      (result: FactCheckResult, idx: number) => (
-                        <FactCard
-                          key={idx}
-                          statement={result.statement}
-                          probability={
-                            result.probability as "high" | "low" | "uncertain"
-                          }
-                          summary={result.reason}
-                          sources={result.sources}
-                        />
-                      )
-                    )}
+                  {results && results.length === 0 && (
+                    <div className="text-yellow-500 text-center">
+                      No statements determined, please try again.
+                    </div>
+                  )}
+                  {results &&
+                    results.length > 0 &&
+                    results.map((result, idx) => (
+                      <FactCard
+                        key={idx}
+                        statement={result.statement}
+                        probability={
+                          result.probability as "high" | "low" | "uncertain"
+                        }
+                        summary={result.reason}
+                        sources={result.sources}
+                      />
+                    ))}
                 </div>
-              </LoadingSteps>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
       <div className="mt-12 flex items-center">
