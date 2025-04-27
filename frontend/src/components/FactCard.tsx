@@ -104,12 +104,15 @@ const FactCard: React.FC<FactCardProps> = ({
   const style = probabilityStyles[probability] || probabilityStyles.low;
   const [faviconUrls, setFaviconUrls] = useState<string[]>([]);
   const [domains, setDomains] = useState<string[]>([]);
+  const [sourceUrls, setSourceUrls] = useState<string[]>([]);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (sources && sources.length > 0) {
       // Process up to 3 sources
-      const extractedDomains = sources.slice(0, 3).map(extractDomain);
+      const topSources = sources.slice(0, 3);
+      setSourceUrls(topSources);
+      const extractedDomains = topSources.map(extractDomain);
       setDomains(extractedDomains);
       const favicons = extractedDomains.map(getFaviconUrl);
       setFaviconUrls(favicons);
@@ -137,25 +140,33 @@ const FactCard: React.FC<FactCardProps> = ({
             {faviconUrls.length > 0 ? (
               <div className="flex -space-x-2 mr-1">
                 {faviconUrls.map((url, index) => (
-                  <div
+                  <a
                     key={index}
-                    className="w-5 h-5 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden relative hover:z-10 transition-transform hover:scale-110 cursor-pointer"
+                    href={sourceUrls[index]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block group relative"
                     title={domains[index]}
                   >
-                    {imageErrors[index] ? (
-                      <FiGlobe size={12} className="text-gray-400" />
-                    ) : (
-                      <Image
-                        src={url}
-                        alt={domains[index]}
-                        width={16}
-                        height={16}
-                        className="object-contain"
-                        unoptimized
-                        onError={() => handleImageError(index)}
-                      />
-                    )}
-                  </div>
+                    <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20">
+                      Visit {domains[index]}
+                    </span>
+                    <div className="w-5 h-5 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden relative hover:z-10 transition-all hover:scale-110 cursor-pointer">
+                      {imageErrors[index] ? (
+                        <FiGlobe size={12} className="text-gray-400" />
+                      ) : (
+                        <Image
+                          src={url}
+                          alt={domains[index]}
+                          width={16}
+                          height={16}
+                          className="object-contain"
+                          unoptimized
+                          onError={() => handleImageError(index)}
+                        />
+                      )}
+                    </div>
+                  </a>
                 ))}
               </div>
             ) : (
