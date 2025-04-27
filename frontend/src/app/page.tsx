@@ -45,10 +45,10 @@ export default function Home() {
           priority
           className="mb-4"
         />
-        <p className="text-lg text-gray-500 mb-6 md:mb-12 text-center">
+        <p className="text-lg text-gray-500 mb-6 text-center">
           Verify TikTok and Instagram Reel content authenticity
         </p>
-        <LiveStatusBar />
+        <LiveStatusBar className="mb-6 md:mb-12" />
         <div className="w-full flex flex-col items-start">
           <InputBar onInputChange={handleInputChange} loading={loading} />
           {loading && (
