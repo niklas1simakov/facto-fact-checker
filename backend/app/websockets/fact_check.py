@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import uuid
+import time
 from typing import Any, Dict, Literal, Optional
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
@@ -22,6 +23,12 @@ router = APIRouter(tags=["websockets"])
 
 # Store active connections
 active_connections: Dict[str, WebSocket] = {}
+# Store last activity time for each connection
+connection_last_activity: Dict[str, float] = {}
+# Connection timeout in seconds (10 minutes)
+CONNECTION_TIMEOUT = 10 * 60
+# How often to check for inactive connections (5 minutes)
+CLEANUP_INTERVAL = 5 * 60
 
 # Define progress type for better type safety
 ProgressStage = Literal[
@@ -110,6 +117,8 @@ async def websocket_fact_check(
         - **verification**: Verifying statements
     - **error**: Error messages
     - **complete**: Final results of the fact checking process
+
+    Connections will automatically close after 10 minutes of inactivity.
     """
     # Use client_id if provided, otherwise generate one
     if not client_id or client_id == "undefined":
@@ -119,6 +128,13 @@ async def websocket_fact_check(
     # Accept connection
     await websocket.accept()
     active_connections[client_id] = websocket
+    # Set initial activity time
+    connection_last_activity[client_id] = time.time()
+
+    # Start the cleanup task if it's not already running
+    if not hasattr(websocket_fact_check, "cleanup_task_running"):
+        websocket_fact_check.cleanup_task_running = True
+        asyncio.create_task(cleanup_inactive_connections())
 
     try:
         # Send initial connection confirmation
@@ -127,6 +143,9 @@ async def websocket_fact_check(
         while True:
             # Wait for messages from the client
             data = await websocket.receive_json()
+            # Update last activity time
+            connection_last_activity[client_id] = time.time()
+
             logger.info(f"Received message from client {client_id}")
             logger.debug(f"Message data: {data}")
 
@@ -157,12 +176,57 @@ async def send_message(client_id: str, data: Dict[str, Any]):
     logger.debug(f"Sending message to {client_id}: {data}")
     if client_id in active_connections:
         await active_connections[client_id].send_json(data)
+        # Update last activity time when sending messages
+        connection_last_activity[client_id] = time.time()
 
 
 def disconnect(client_id: str):
     """Disconnect client."""
     if client_id in active_connections:
         del active_connections[client_id]
+    if client_id in connection_last_activity:
+        del connection_last_activity[client_id]
+
+
+async def cleanup_inactive_connections():
+    """Periodically check and close inactive connections."""
+    while True:
+        try:
+            current_time = time.time()
+            clients_to_disconnect = []
+
+            # Find inactive connections
+            for client_id, last_activity in connection_last_activity.items():
+                if current_time - last_activity > CONNECTION_TIMEOUT:
+                    clients_to_disconnect.append(client_id)
+
+            # Disconnect inactive clients
+            for client_id in clients_to_disconnect:
+                logger.info(
+                    f"Closing inactive connection for client {client_id} after {CONNECTION_TIMEOUT / 60} minutes"
+                )
+                if client_id in active_connections:
+                    try:
+                        # Send timeout message before closing
+                        await send_message(
+                            client_id,
+                            ErrorMessage("Connection closed due to inactivity"),
+                        )
+                        await active_connections[client_id].close(
+                            code=1000, reason="Inactive connection"
+                        )
+                    except Exception as e:
+                        logger.error(
+                            f"Error closing connection for {client_id}: {str(e)}"
+                        )
+                    finally:
+                        disconnect(client_id)
+
+        except Exception as e:
+            logger.error(f"Error in cleanup task: {str(e)}", exc_info=True)
+
+        # Wait for next cleanup cycle
+        await asyncio.sleep(CLEANUP_INTERVAL)
 
 
 async def process_request(
