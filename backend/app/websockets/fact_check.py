@@ -1,6 +1,7 @@
 """WebSocket for fact checking with progress updates."""
 
 import asyncio
+import logging
 import uuid
 from typing import Any, Dict, Literal, Optional
 
@@ -10,6 +11,12 @@ from app.api.dependencies import get_content_service
 from app.core.config import MAX_STATEMENTS
 from app.models.schemas import BodyData
 from app.services.content_service import ContentService
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("factcheck_websocket")
 
 router = APIRouter(tags=["websockets"])
 
@@ -107,6 +114,7 @@ async def websocket_fact_check(
     # Use client_id if provided, otherwise generate one
     if not client_id or client_id == "undefined":
         client_id = str(uuid.uuid4())
+        logger.debug(f"Generated new client_id: {client_id}")
 
     # Accept connection
     await websocket.accept()
@@ -119,6 +127,8 @@ async def websocket_fact_check(
         while True:
             # Wait for messages from the client
             data = await websocket.receive_json()
+            logger.info(f"Received message from client {client_id}")
+            logger.debug(f"Message data: {data}")
 
             # Start processing in the background
             asyncio.create_task(process_request(client_id, data, content_service))
@@ -127,10 +137,15 @@ async def websocket_fact_check(
         disconnect(client_id)
     except Exception as e:
         # Handle unexpected errors
+        logger.error(
+            f"Unexpected error in websocket connection for {client_id}: {str(e)}",
+            exc_info=True,
+        )
         try:
             await send_message(client_id, ErrorMessage(f"Unexpected error: {str(e)}"))
         except Exception:
             # If we can't send the error, just disconnect
+            logger.error(f"Failed to send error message to {client_id}", exc_info=True)
             pass
         finally:
             disconnect(client_id)
@@ -139,7 +154,7 @@ async def websocket_fact_check(
 async def send_message(client_id: str, data: Dict[str, Any]):
     """Send message to client."""
 
-    print(f"Sending message to {client_id}: {data}")
+    logger.debug(f"Sending message to {client_id}: {data}")
     if client_id in active_connections:
         await active_connections[client_id].send_json(data)
 
@@ -188,14 +203,14 @@ async def process_request(
                 else:
                     transcript = content_service._get_tiktok_transcript(body_data.data)
 
-                print(f"Transcript: {transcript}")
+                logger.debug(f"Transcript: {transcript}")
 
                 # Extract statements from transcript
                 await send_message(client_id, ProgressUpdate(stage="extraction"))
                 statements = content_service.openai_service.extract_statements(
                     transcript
                 )
-                print(f"Statements: {statements}")
+                logger.debug(f"Statements: {statements}")
             else:
                 await send_message(
                     client_id,
@@ -265,10 +280,13 @@ async def process_request(
         # Send final results
         await send_message(client_id, CompleteMessage(results=results))
 
-        print(f"Fact check complete for {client_id}")
-        print(f"Results: {results}")
+        logger.info(f"Fact check complete for {client_id}")
+        logger.debug(f"Results: {results}")
 
     except Exception as e:
+        logger.error(
+            f"Error during fact checking for {client_id}: {str(e)}", exc_info=True
+        )
         await send_message(
             client_id, ErrorMessage(f"Error during fact checking: {str(e)}")
         )
@@ -276,4 +294,5 @@ async def process_request(
 
 async def send_error(client_id: str, message: str):
     """Send error message to client."""
+    logger.error(f"Sending error to client {client_id}: {message}")
     await send_message(client_id, ErrorMessage(message))
