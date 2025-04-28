@@ -78,7 +78,7 @@ export default function Home() {
 
           {hasSent && !connected && (
             <div className="w-full mt-4 text-red-500 text-center">
-              WebSocket connection error. Please try again in a moment & check
+              WebSocket connection error. Please reload the page and check your
               your internet connection.
             </div>
           )}

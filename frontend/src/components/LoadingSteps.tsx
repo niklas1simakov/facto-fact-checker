@@ -41,14 +41,12 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
       { label: "Starting fact check process", stage: "started" },
       { label: "Transcribing video", stage: "video-processing" },
       { label: "Extracting statements from transcript", stage: "extraction" },
-      { label: "Statements extraction complete", stage: "extraction_complete" },
       { label: "Verifying statements", stage: "verification" },
     ];
   } else {
     steps = [
       { label: "Starting fact check process", stage: "started" },
       { label: "Extracting statements from text", stage: "extraction" },
-      { label: "Statements extraction complete", stage: "extraction_complete" },
       { label: "Verifying statements", stage: "verification" },
     ];
   }
@@ -81,19 +79,10 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
     statementIndex !== undefined &&
     totalStatements
   ) {
-    const verificationStepIndex = isUrl(inputValue) ? 4 : 3;
+    const verificationStepIndex = isUrl(inputValue) ? 3 : 2;
     steps[verificationStepIndex] = {
       label: `Verifying statements (${statementIndex + 1}/${totalStatements})`,
       stage: "verification",
-    };
-  }
-
-  // Update extraction_complete to show total statements
-  if (currentStage === "extraction_complete" && totalStatements) {
-    const extractionCompleteIndex = isUrl(inputValue) ? 3 : 2;
-    steps[extractionCompleteIndex] = {
-      label: `Statements extraction complete (found ${totalStatements})`,
-      stage: "extraction_complete",
     };
   }
 
@@ -112,9 +101,9 @@ const LoadingSteps: React.FC<LoadingStepsProps> = ({
           <motion.div
             key={step.label + idx}
             className="flex items-center gap-2"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.4, delay: idx * 0.08 }}
           >
             {idx < displayedStep ? (

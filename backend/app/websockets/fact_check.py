@@ -138,6 +138,8 @@ async def websocket_fact_check(
 
 async def send_message(client_id: str, data: Dict[str, Any]):
     """Send message to client."""
+
+    print(f"Sending message to {client_id}: {data}")
     if client_id in active_connections:
         await active_connections[client_id].send_json(data)
 
@@ -186,11 +188,14 @@ async def process_request(
                 else:
                     transcript = content_service._get_tiktok_transcript(body_data.data)
 
+                print(f"Transcript: {transcript}")
+
                 # Extract statements from transcript
                 await send_message(client_id, ProgressUpdate(stage="extraction"))
                 statements = content_service.openai_service.extract_statements(
                     transcript
                 )
+                print(f"Statements: {statements}")
             else:
                 await send_message(
                     client_id,
@@ -206,20 +211,25 @@ async def process_request(
                 str(body_data.data)
             )
 
+        # Wait 2 second - this is a hack to allow the client to update the UI
+        await asyncio.sleep(2)
+
         # Limit number of statements
         # TODO: add back in and notify user if statements were limited
         # original_count = len(statements)
         statements = statements[:MAX_STATEMENTS]
         # was_limited = original_count > MAX_STATEMENTS
 
-        await send_message(
-            client_id,
-            ProgressUpdate(
-                stage="extraction_complete",
-                statements=statements,
-                totalStatements=len(statements),
-            ),
-        )
+        # await send_message(
+        #     client_id,
+        #     ProgressUpdate(
+        #         stage="extraction_complete",
+        #         statements=statements,
+        #     ),
+        # )
+
+        # Wait 2 second - this is a hack to allow the client to update the UI
+        # await asyncio.sleep(2)
 
         # Check each statement
         results = []
@@ -254,6 +264,9 @@ async def process_request(
 
         # Send final results
         await send_message(client_id, CompleteMessage(results=results))
+
+        print(f"Fact check complete for {client_id}")
+        print(f"Results: {results}")
 
     except Exception as e:
         await send_message(
