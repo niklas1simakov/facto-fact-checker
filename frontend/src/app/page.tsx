@@ -19,6 +19,7 @@ export default function Home() {
   const [hasSent, setHasSent] = useState(false);
   const {
     connected,
+    clientId,
     progress,
     results: rawResults,
     error,
@@ -73,6 +74,20 @@ export default function Home() {
           Fighting misinformation, one claim at a time.
         </p>
         <LiveStatusBar className="mb-6 md:mb-12" />
+
+        {/* Add WebSocket status for debugging */}
+        <div className="text-xs text-gray-500 mb-4 self-end">
+          <span
+            className={`inline-block w-2 h-2 rounded-full mr-1 ${
+              connected ? "bg-green-500" : "bg-red-500"
+            }`}
+          ></span>
+          {connected ? "Connected" : "Disconnected"}
+          {clientId && (
+            <span className="ml-1">| ID: {clientId.substring(0, 8)}...</span>
+          )}
+        </div>
+
         <div className="w-full flex flex-col items-start">
           <InputBar onInputChange={handleInputChange} loading={isChecking} />
 
